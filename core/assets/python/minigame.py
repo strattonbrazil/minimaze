@@ -55,9 +55,14 @@ class Minigame(object):
                 "size" : [unit*2, unit*2]
             }
 
+            def scale_square(rect, factor):
+                newSize = rect["size"][0] * factor
+                newBorder = (newSize - rect["size"][0]) * 0.5
+                rect["size"] = (newSize, newSize)
+                rect["position"] = (rect["position"][0] - newBorder, rect["position"][1] - newBorder)
 
             # figure out the color
-            if not playing: # no user input or demoing yet
+            if not playing: # no user input and not demoing yet
                 rect["color"] = scale_color(colors[i], 0.4)
             elif point_contains_rect(ctx["mousePos"], rect) and not demoing:
                 rect["color"] = colors[i]
@@ -66,6 +71,7 @@ class Minigame(object):
             elif demoing and i == colorIndexToDemo:
                 if highlightDemoColor:
                     rect["color"] = colors[i]
+                    scale_square(rect, 1.1)
                 else:
                     rect["color"] = scale_color(colors[i], 0.4)
                 possibleSound = possibleSounds[i]

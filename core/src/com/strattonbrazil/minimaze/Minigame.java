@@ -102,7 +102,6 @@ public class Minigame {
         boolean gameStarting = _gameContext.__getitem__(new PyString("status")).toString() == "starting";
         
         if (_started && gameStarting && TimeUtils.millis() - _startTime > 1000) {
-            System.out.println("setting game to play mode");
             _gameContext.__setitem__(new PyString("status"), new PyString("playing"));
             _gameContext.__setitem__(new PyString("startTime"), _interp.eval(Long.toString(TimeUtils.millis())));
         }

@@ -104,14 +104,16 @@ public class MinimazeGame extends ApplicationAdapter {
         _relativeMinigameCursorPos = new Vector2((Gdx.input.getX() - MINIGAME_LEFT_OFFSET) / MINIGAME_RENDER_SIZE,
                                                  (Gdx.input.getY() - MINIGAME_PADDING) / MINIGAME_RENDER_SIZE);
         
-        if (_mode == GameMode.GOAL) {
-            batch.begin();
-            batch.setColor(1.0f, 1.0f, 1.0f, _minigameOpacity);
-            batch.draw(_minigameBuffer.getColorBufferTexture(), 
-                       MINIGAME_LEFT_OFFSET, 
-                       MINIGAME_PADDING, 
-                       MINIGAME_RENDER_SIZE, MINIGAME_RENDER_SIZE);
-            batch.end();
+        if (_mode == GameMode.GOAL || _mode == GameMode.FLEEING) {
+            if (_minigameOpacity > 0.01f) {
+                batch.begin();
+                batch.setColor(1.0f, 1.0f, 1.0f, _minigameOpacity);
+                batch.draw(_minigameBuffer.getColorBufferTexture(), 
+                           MINIGAME_LEFT_OFFSET, 
+                           MINIGAME_PADDING, 
+                           MINIGAME_RENDER_SIZE, MINIGAME_RENDER_SIZE);
+                batch.end();
+            }
         } else if (_mode == GameMode.DYING) {
             //_font.draw(batch, "Hello World", 200, 200);
         }
@@ -164,6 +166,8 @@ public class MinimazeGame extends ApplicationAdapter {
                     _deathStart = TimeUtils.millis();
                 }
             }
+        } else if (_mode == GameMode.FLEEING) {
+            _minigameOpacity = Math.max(_minigameOpacity - 0.001f * elapsed, 0.0f);
         }
         
     }
