@@ -2,10 +2,12 @@ package com.strattonbrazil.minimaze;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.TimeUtils;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.util.PythonInterpreter;
@@ -15,18 +17,28 @@ public class Minigame {
     private PyObject _gameContext;
     private PyObject _minigame;
     private boolean _started;
+    private boolean _leftMouseWasUp;
+    private long _startTime;
+    private boolean _isFinished;
+    private boolean _isSuccess;
             
     Minigame() {
         _interp = PythonUtil.getPythonInterpreter();
         
         _interp.exec("import minigame");
-        _gameContext = _interp.eval("{}");
+        _gameContext = _interp.eval("{ 'status' : 'starting' }");
         _minigame = _interp.eval("minigame.Minigame()");
         _started = false;
+        _leftMouseWasUp = true;
+        _isFinished = false;
+        _isSuccess = false;
     }
     
     void start() {
-        _started = true;
+        if (!_started) {
+            _startTime = TimeUtils.millis();
+            _started = true;
+        }
     }
     
     void draw() {
@@ -82,12 +94,42 @@ public class Minigame {
         
         _gameContext.__setitem__("mousePos", _interp.eval("(" + relativeCursorPos.x + "," + relativeCursorPos.y + ")"));
       
-        _gameContext.__setitem__("mouseDown", toPyBool(Gdx.input.isButtonPressed(Buttons.LEFT)));
+        boolean leftMouseDown = Gdx.input.isButtonPressed(Buttons.LEFT);
+        _gameContext.__setitem__("mouseDown", toPyBool(leftMouseDown));  
+        _gameContext.__setitem__("mousePress", toPyBool(_leftMouseWasUp && leftMouseDown));
+        _leftMouseWasUp = !leftMouseDown;
 
-        _gameContext.__setitem__("started", toPyBool(_started));
+        boolean gameStarting = _gameContext.__getitem__(new PyString("status")).toString() == "starting";
+        
+        if (_started && gameStarting && TimeUtils.millis() - _startTime > 1000) {
+            System.out.println("setting game to play mode");
+            _gameContext.__setitem__(new PyString("status"), new PyString("playing"));
+            _gameContext.__setitem__(new PyString("startTime"), _interp.eval(Long.toString(TimeUtils.millis())));
+        }
+        _gameContext.__setitem__(new PyString("currentTime"), _interp.eval(Long.toString(TimeUtils.millis())));
+        
+        
+        String status = _gameContext.__getitem__(new PyString("status")).toString();
+        if (status == "success" || status == "failure") {
+            _isFinished = true;
+            _isSuccess = status == "success";
+        }
         
         _minigame.invoke("update", _gameContext);
         
-        //_interp.exec(_gameContext)
+        if (_gameContext.__contains__(new PyString("sound"))) {
+            String soundName = _gameContext.__getitem__(new PyString("sound")).asString();
+            Sound sound = Gdx.audio.newSound(Gdx.files.internal("sounds/" + soundName + ".wav"));
+            sound.play(1.0f);
+            _gameContext.__delitem__("sound");
+        }
+    }
+    
+    boolean isFinished() {
+        return _isFinished;
+    }
+    
+    boolean isSuccess() {
+        return _isSuccess;
     }
 }

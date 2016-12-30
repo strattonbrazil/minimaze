@@ -18,28 +18,24 @@ def get_pattern(count):
     print pattern
     return pattern
 
-def get_current_time():
-    return int(round(time.time() * 1000))
-
-
 class Minigame(object):
     def update(self, ctx):
+        status = ctx["status"]
+
         if "state" not in ctx: # initialize game
             ctx["state"] = {
                 "pattern" : get_pattern(3),
                 "clicks" : [],
-                "startTime" : get_current_time(),
                 "lastColorIndexToDemo" : None
             }
 
-        if "wasUp" not in ctx:
-            ctx["wasUp"] = True
-
         unit = 1 / 7.0
 
-        patternElapsed = get_current_time() - ctx["state"]["startTime"]
-        demoingIndex = patternElapsed / 1000
-        demoing = demoingIndex < len(ctx["state"]["pattern"])
+        playing = status == "playing"
+        if playing:
+            patternElapsed = ctx["currentTime"] - ctx["startTime"]
+            demoingIndex = patternElapsed / 1000
+        demoing = playing and demoingIndex < len(ctx["state"]["pattern"])
         if demoing: # figure out which color to play
             colorIndexToDemo = ctx["state"]["pattern"][demoingIndex]
             highlightDemoColor = patternElapsed - demoingIndex * 1000 < 800
@@ -61,7 +57,9 @@ class Minigame(object):
 
 
             # figure out the color
-            if point_contains_rect(ctx["mousePos"], rect) and not demoing:
+            if not playing: # no user input or demoing yet
+                rect["color"] = scale_color(colors[i], 0.4)
+            elif point_contains_rect(ctx["mousePos"], rect) and not demoing:
                 rect["color"] = colors[i]
                 possibleSound = possibleSounds[i]
                 possibleIndex = i
@@ -76,12 +74,12 @@ class Minigame(object):
             assets.append(rect)
         ctx["assets"] = assets
 
-        if demoing and colorIndexToDemo != ctx["state"]["lastColorIndexToDemo"]:
+        if demoing and colorIndexToDemo != ctx["state"]["lastColorIndexToDemo"] and playing:
             ctx["sound"] = possibleSound
             ctx["state"]["lastColorIndexToDemo"] = colorIndexToDemo
 
-        if ctx["mouseDown"] and ctx["wasUp"] and not demoing: # press
-            if possibleSound and possibleIndex:
+        if ctx["mousePress"] and not demoing and playing: # press
+            if possibleSound is not None and possibleIndex is not None:
                 ctx["sound"] = possibleSound
                 ctx["state"]["clicks"].append(possibleIndex)
 
@@ -93,7 +91,3 @@ class Minigame(object):
                     ctx["status"] = "failure"
                 elif len(ctx["state"]["pattern"]) == len(ctx["state"]["clicks"]):
                     ctx["status"] = "success"
-
-            ctx["wasUp"] = False
-
-        ctx["wasUp"] = not ctx["mouseDown"]

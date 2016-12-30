@@ -3,10 +3,12 @@ package com.strattonbrazil.minimaze;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
@@ -15,6 +17,7 @@ import com.badlogic.gdx.utils.TimeUtils;
 import org.python.util.PythonInterpreter;
 
 public class MinimazeGame extends ApplicationAdapter {
+    BitmapFont _font;
     SpriteBatch batch;
     Texture img;
     Player _player;
@@ -25,11 +28,12 @@ public class MinimazeGame extends ApplicationAdapter {
     FrameBuffer _minigameBuffer;
     Vector2 _relativeMinigameCursorPos;
     float _minigameOpacity;
+    long _deathStart;
 
     final int NUM_ROWS = 1;
     final int NUM_COLUMNS = 3;
     
-    enum GameMode { SEARCHING, GOAL, FLEEING };
+    enum GameMode { SEARCHING, GOAL, FLEEING, DYING };
     
     GameMode _mode;
     
@@ -37,6 +41,8 @@ public class MinimazeGame extends ApplicationAdapter {
     public void create () {
         batch = new SpriteBatch();
         img = new Texture("badlogic.jpg");
+        _font = new BitmapFont();
+        _font.setColor(Color.RED);
         
         _player = new Player();
         _goal = new Goal(NUM_ROWS-1,NUM_COLUMNS-1);
@@ -106,6 +112,8 @@ public class MinimazeGame extends ApplicationAdapter {
                        MINIGAME_PADDING, 
                        MINIGAME_RENDER_SIZE, MINIGAME_RENDER_SIZE);
             batch.end();
+        } else if (_mode == GameMode.DYING) {
+            //_font.draw(batch, "Hello World", 200, 200);
         }
     }
     
@@ -122,7 +130,7 @@ public class MinimazeGame extends ApplicationAdapter {
         _lastTime = currentTime;
         
         // handle player controls
-        if (_mode != GameMode.GOAL && !_player.isMoving()) {
+        if (_mode != GameMode.GOAL && _mode != GameMode.DYING && !_player.isMoving()) {
             Vector2 pos = _player.mazePos();
             if (Gdx.input.isKeyPressed(Input.Keys.S) && _maze.hasWall((int)pos.x, (int)pos.y, "down")) {
                 _player.setMove(new Vector2(1,0));
@@ -142,14 +150,21 @@ public class MinimazeGame extends ApplicationAdapter {
         if (_mode == GameMode.SEARCHING && _player.mazePos().dst(_goal.mazePos()) < 0.1f) {
             _mode = GameMode.GOAL;
             _minigameOpacity = 0.0f;
-        }/* else if (mode == GameMode::GOAL && miniGame.isFinished()) {
-            std::cout << "finished" << std::endl;
-            mode = GameMode::FLEEING;
-        }*/
-        
-        _minigameOpacity = Math.min(_minigameOpacity + 0.001f * elapsed, 1.0f);
-        if (_minigameOpacity > 0.95) {
-            _minigame.start();
+        } else if (_mode == GameMode.GOAL) {
+            _minigameOpacity = Math.min(_minigameOpacity + 0.001f * elapsed, 1.0f);
+            if (_minigameOpacity > 0.95) {
+                _minigame.start();
+            }
+            
+            if (_minigame.isFinished()) {
+                if (_minigame.isSuccess())
+                    _mode = GameMode.FLEEING;
+                else {
+                    _mode = GameMode.DYING;
+                    _deathStart = TimeUtils.millis();
+                }
+            }
         }
+        
     }
 }
