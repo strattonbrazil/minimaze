@@ -5,9 +5,10 @@ import time
 import subprocess
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-from playsound import playsound
 
-from minigame import update_game
+sys.path.append("core/assets/python")
+
+from minigame import Minigame
 
 class MinigameView(QtGui.QWidget):
     def __init__(self):
@@ -23,6 +24,8 @@ class MinigameView(QtGui.QWidget):
         self._leftMouseButtonDown = False
 
         #self.playSound("piano-c")
+
+        self.minigame = Minigame()
 
         self.updateCtx()
 
@@ -43,7 +46,7 @@ class MinigameView(QtGui.QWidget):
         self.ctx["mousePos"] = (mousePos.x() / windowSize, mousePos.y() / windowSize)
         self.ctx["mouseDown"] = self._leftMouseButtonDown
 
-        update_game(self.ctx)
+        self.minigame.update(self.ctx)
 
         if "sound" in self.ctx:
             self.playSound(self.ctx["sound"])
