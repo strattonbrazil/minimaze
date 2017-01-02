@@ -118,6 +118,7 @@ public class Minigame {
         
         if (_gameContext.__contains__(new PyString("sound"))) {
             String soundName = _gameContext.__getitem__(new PyString("sound")).asString();
+            System.out.println("sound: " + soundName);
             Sound sound = Gdx.audio.newSound(Gdx.files.internal("sounds/" + soundName + ".wav"));
             sound.play(1.0f);
             _gameContext.__delitem__("sound");

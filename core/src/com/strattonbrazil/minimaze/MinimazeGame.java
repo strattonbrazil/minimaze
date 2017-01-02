@@ -148,6 +148,8 @@ public class MinimazeGame extends ApplicationAdapter {
         _player.update(elapsed);
         _minigame.update(elapsed, _relativeMinigameCursorPos);
         
+        _maze.setPlayerPosition(_player.mazePos());
+        
         // entering goal area
         if (_mode == GameMode.SEARCHING && _player.mazePos().dst(_goal.mazePos()) < 0.1f) {
             _mode = GameMode.GOAL;

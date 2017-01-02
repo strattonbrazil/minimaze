@@ -3,6 +3,7 @@ package com.strattonbrazil.minimaze;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
+import com.badlogic.gdx.math.Vector2;
 import java.util.HashSet;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
@@ -11,6 +12,7 @@ public class Maze {
     final int NUM_ROWS;
     final int NUM_COLUMNS;
     HashSet<String> _openWalls;
+    Vector2 _playerPosition;
         
     Maze(final int numRows, final int numColumns) {
         NUM_ROWS = numRows;
@@ -32,6 +34,10 @@ public class Maze {
             _openWalls.add(wallToKey(row, column, side));
         }
         //interp.execfile("/home/stratton/Public/parts/python/maze.py");
+    }
+    
+    void setPlayerPosition(Vector2 pos) {
+        _playerPosition = pos;
     }
         
     String wallToKey(int row, int column, String dir) {
@@ -73,6 +79,54 @@ public class Maze {
                 }
             }
         }
+        
+        r.end();
+        
+        boolean drawShadows = false;
+        if (drawShadows) {
+            Vector2 playerSource = new Vector2(_playerPosition.y, _playerPosition.x); // switch to x,y
+            for (int row = 0; row < NUM_ROWS; row++) {
+                for (int column = 0; column < NUM_COLUMNS; column++) {
+                    Cell cell = getCell(row, column);
+                    if (!cell.up) {
+                        Vector2 a = new Vector2(column, row);
+                        Vector2 b = new Vector2(column+1, row);
+                        drawExtrudedQuad(camera, r, playerSource, a, b);
+                    }
+                    if (!cell.down) {
+                        Vector2 a = new Vector2(column, row+1);
+                        Vector2 b = new Vector2(column+1, row+1);
+                        drawExtrudedQuad(camera, r, playerSource, a, b);
+                    }
+                    if (!cell.left) {
+                        Vector2 a = new Vector2(column, row);
+                        Vector2 b = new Vector2(column, row+1);
+                        drawExtrudedQuad(camera, r, playerSource, a, b);
+                    }
+                    if (!cell.right) {
+                        Vector2 a = new Vector2(column+1, row);
+                        Vector2 b = new Vector2(column+1, row+1);
+                        drawExtrudedQuad(camera, r, playerSource, a, b);
+                    }
+                }
+            }
+        }
+    }
+    
+    void drawExtrudedQuad(OrthographicCamera camera, ImmediateModeRenderer20 r, Vector2 source, Vector2 a, Vector2 b) {
+        r.begin(camera.combined, GL20.GL_TRIANGLE_FAN);
+        
+        Vector2 aV = a.cpy().sub(source).nor().scl(1000).add(a);
+        Vector2 bV = b.cpy().sub(source).nor().scl(1000).add(b);
+        
+        r.color(0,0,0,1);
+        r.vertex(a.x, a.y, 0);
+        r.color(0,0,0,1);
+        r.vertex(aV.x, aV.y, 0);
+        r.color(0,0,0,1);
+        r.vertex(bV.x, bV.y, 0);
+        r.color(0,0,0,1);
+        r.vertex(b.x, b.y, 0);
         
         r.end();
     }

@@ -2,7 +2,7 @@ import sys
 import random
 import time
 
-def point_contains_rect(mousePos, rect):
+def rect_contains_point(rect, mousePos):
     mouseX, mouseY = mousePos
     rectX, rectY = rect["position"]
     rectWidth, rectHeight = rect["size"]
@@ -61,11 +61,13 @@ class Minigame(object):
                 rect["size"] = (newSize, newSize)
                 rect["position"] = (rect["position"][0] - newBorder, rect["position"][1] - newBorder)
 
-            # figure out the color
+            # figure out he color
             if not playing: # no user input and not demoing yet
                 rect["color"] = scale_color(colors[i], 0.4)
-            elif point_contains_rect(ctx["mousePos"], rect) and not demoing:
+            elif rect_contains_point(rect, ctx["mousePos"]) and not demoing:
                 rect["color"] = colors[i]
+                if "lastClickTime" in ctx["state"] and ctx["currentTime"] - ctx["state"]["lastClickTime"] < 800 and ctx["state"]["clicks"][-1] == i:
+                    scale_square(rect, 1.1)
                 possibleSound = possibleSounds[i]
                 possibleIndex = i
             elif demoing and i == colorIndexToDemo:
@@ -88,6 +90,7 @@ class Minigame(object):
             if possibleSound is not None and possibleIndex is not None:
                 ctx["sound"] = possibleSound
                 ctx["state"]["clicks"].append(possibleIndex)
+                ctx["state"]["lastClickTime"] = ctx["currentTime"]
 
                 fail = False
                 for i,clickIndex in enumerate(ctx["state"]["clicks"]):
