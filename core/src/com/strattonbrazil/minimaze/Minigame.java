@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.TimeUtils;
+import java.util.HashMap;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.util.PythonInterpreter;
@@ -21,6 +22,7 @@ public class Minigame {
     private long _startTime;
     private boolean _isFinished;
     private boolean _isSuccess;
+    private HashMap<String,Sound> _sounds;
             
     Minigame() {
         _interp = PythonUtil.getPythonInterpreter();
@@ -32,6 +34,7 @@ public class Minigame {
         _leftMouseWasUp = true;
         _isFinished = false;
         _isSuccess = false;
+        _sounds = new HashMap<String,Sound>();
     }
     
     void start() {
@@ -119,7 +122,10 @@ public class Minigame {
         if (_gameContext.__contains__(new PyString("sound"))) {
             String soundName = _gameContext.__getitem__(new PyString("sound")).asString();
             System.out.println("sound: " + soundName);
-            Sound sound = Gdx.audio.newSound(Gdx.files.internal("sounds/" + soundName + ".wav"));
+            if (!_sounds.containsKey(soundName)) {
+                _sounds.put(soundName, Gdx.audio.newSound(Gdx.files.internal("sounds/" + soundName + ".wav")));
+            }
+            Sound sound = _sounds.get(soundName);
             sound.play(1.0f);
             _gameContext.__delitem__("sound");
         }

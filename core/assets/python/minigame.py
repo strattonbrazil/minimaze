@@ -26,7 +26,7 @@ class Minigame(object):
             ctx["state"] = {
                 "pattern" : get_pattern(3),
                 "clicks" : [],
-                "lastColorIndexToDemo" : None
+                "lastDemoingIndex" : None
             }
 
         unit = 1 / 7.0
@@ -82,9 +82,9 @@ class Minigame(object):
             assets.append(rect)
         ctx["assets"] = assets
 
-        if demoing and colorIndexToDemo != ctx["state"]["lastColorIndexToDemo"] and playing:
+        if demoing and demoingIndex != ctx["state"]["lastDemoingIndex"] and playing:
             ctx["sound"] = possibleSound
-            ctx["state"]["lastColorIndexToDemo"] = colorIndexToDemo
+            ctx["state"]["lastDemoingIndex"] = demoingIndex
 
         if ctx["mousePress"] and not demoing and playing: # press
             if possibleSound is not None and possibleIndex is not None:
